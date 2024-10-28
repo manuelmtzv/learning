@@ -35,14 +35,15 @@ func (api *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload User
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 
 	u := User{
-		Id:   strconv.Itoa(len(users) + 1),
-		Age:  payload.Age,
-		Name: payload.Name,
+		Id:       strconv.Itoa(len(users) + 1),
+		Age:      payload.Age,
+		Name:     payload.Name,
+		Username: payload.Username,
 	}
 
 	err = insertUser(u)
@@ -56,6 +57,7 @@ func (api *api) createUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func insertUser(u User) error {
+
 	if u.Name == "" {
 		return errors.New("name is required")
 	}
@@ -64,7 +66,7 @@ func insertUser(u User) error {
 		return errors.New("username is required")
 	}
 
-	if u.Age == 0 || u.Age > 100 {
+	if u.Age < 1 || u.Age > 100 {
 		return errors.New("age should be between 0 and 100")
 	}
 
