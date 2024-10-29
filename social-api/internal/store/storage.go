@@ -3,14 +3,15 @@ package store
 import (
 	"context"
 	"database/sql"
+	"social-api/internal/models"
 )
 
 type Storage struct {
 	Posts interface {
-		Create(context.Context, *Post) error
+		Create(context.Context, *models.Post) error
 	}
 	Users interface {
-		Create(context.Context, *User) error
+		Create(context.Context, *models.User) error
 	}
 }
 
