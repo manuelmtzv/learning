@@ -11,7 +11,7 @@ func main() {
 	cfg := config{
 		addr: env.GetString("ADDR", ":8080"),
 		db: dbConfig{
-			addr:         env.GetString("DB_ADDR", "host=localhost user=postgres password=password dbname=social-api-db port=5432  sslmode=disable"),
+			addr:         env.GetString("DB_ADDR", "postgres://postgres:password@localhost:5432/social-api-db?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 25),
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 25),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
@@ -27,6 +27,9 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	defer db.Close()
+	log.Println("database connection stablished")
 
 	store := store.NewStorage(db)
 
