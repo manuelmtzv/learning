@@ -1,18 +1,18 @@
-package requester
+package main
 
 import (
 	"log"
 	"time"
 )
 
-type Request struct {
-	Fn func() int
-	C  chan int
+type Requester interface {
+	Request(work chan<- request)
+	logger(result int)
 }
 
-type Requester interface {
-	Request(work chan<- Request)
-	logger(result int)
+type request struct {
+	Fn func() int
+	C  chan int
 }
 
 func NewRequester(workers int) Requester {
@@ -25,12 +25,12 @@ type requester struct {
 	workers int
 }
 
-func (r *requester) Request(work chan<- Request) {
+func (r *requester) Request(work chan<- request) {
 	c := make(chan int)
 
 	for {
 		time.Sleep(1 * time.Second)
-		work <- Request{workFn, c}
+		work <- request{workFn, c}
 		result := <-c
 		r.logger(result)
 	}

@@ -1,11 +1,5 @@
 package main
 
-import (
-	"work-balancer/internal/balancer"
-	"work-balancer/internal/requester"
-	"work-balancer/internal/worker"
-)
-
 type config struct {
 	workers int
 }
@@ -15,14 +9,14 @@ func main() {
 		workers: 10,
 	}
 
-	work := make(chan requester.Request)
-	done := make(chan *worker.Worker)
+	work := make(chan request)
+	done := make(chan *worker)
 
-	b := balancer.NewBalancer(done)
+	b := NewBalancer(done)
 
 	for i := 0; i < cfg.workers; i++ {
-		w := &worker.Worker{
-			Requests: make(chan requester.Request),
+		w := &worker{
+			Requests: make(chan request),
 			Index:    i,
 		}
 		b.AddWorker(w)
@@ -32,7 +26,7 @@ func main() {
 
 	go b.Balance(work)
 
-	req := requester.NewRequester(cfg.workers)
+	req := NewRequester(cfg.workers)
 	go req.Request(work)
 
 	select {}
