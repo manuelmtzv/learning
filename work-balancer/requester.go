@@ -29,7 +29,6 @@ func (r *requester) Request(work chan<- request) {
 	c := make(chan int)
 
 	for {
-		time.Sleep(1 * time.Second)
 		work <- request{workFn, c}
 		result := <-c
 		r.logger(result)
@@ -41,5 +40,5 @@ func (r *requester) logger(result int) {
 }
 
 func workFn() int {
-	return 1
+	return time.Now().Second()
 }

@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Pool []*worker
 
 type Balancer interface {
@@ -9,13 +11,16 @@ type Balancer interface {
 	completed(w *worker)
 }
 
-func NewBalancer(done chan *worker) Balancer {
-	return &balancer{}
-}
-
 type balancer struct {
 	pool Pool
 	done chan *worker
+}
+
+func NewBalancer(done chan *worker) Balancer {
+	return &balancer{
+		pool: make(Pool, 0),
+		done: done,
+	}
 }
 
 func (b *balancer) AddWorker(w *worker) {
@@ -34,9 +39,13 @@ func (b *balancer) Balance(work chan request) {
 }
 
 func (b *balancer) dispatch(req request) {
+	if len(b.pool) == 0 {
+		fmt.Println("No workers available to dispatch")
+		return
+	}
 	w := b.pool[0]
+	b.pool = b.pool[1:]
 	w.Requests <- req
-	b.pool = append(b.pool[1:], w)
 }
 
 func (b *balancer) completed(w *worker) {

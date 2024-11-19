@@ -11,6 +11,7 @@ func main() {
 
 	work := make(chan request)
 	done := make(chan *worker)
+	defer close(done)
 
 	b := NewBalancer(done)
 
