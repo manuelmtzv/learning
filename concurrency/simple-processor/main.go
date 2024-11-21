@@ -21,11 +21,9 @@ func main() {
 	}
 
 	tasks := []int{}
-	c := sync.Cond{
-		L: &sync.Mutex{},
-	}
+	c := sync.NewCond(&sync.Mutex{})
 
-	go addTasks(cfg, &tasks, &c)
+	go addTasks(cfg, &tasks, c)
 
 	for {
 		c.L.Lock()
