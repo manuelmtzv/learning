@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"order-processing/internal/db"
 	"order-processing/internal/env"
 	"order-processing/internal/store"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"go.uber.org/zap"
@@ -39,11 +43,26 @@ func main() {
 
 	store := store.NewStorage(db)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	app := &application{
 		processor: cfg.processor,
 		store:     store,
 		logger:    logger,
+		ctx:       ctx,
 	}
 
-	app.run()
+	signalStream := make(chan os.Signal, 1)
+	signal.Notify(signalStream, os.Interrupt, syscall.SIGTERM)
+
+	go app.run()
+
+	<-signalStream
+	logger.Infof("Shutting down gracefully... CTRL + C to force.")
+
+	cancel()
+
+	time.Sleep(1 * time.Second) // Simulate cleanup
+	logger.Infof("Application stopped.")
 }

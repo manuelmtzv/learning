@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"order-processing/internal/store"
 	"time"
 
@@ -11,6 +12,7 @@ type application struct {
 	store     *store.Storage
 	logger    *zap.SugaredLogger
 	processor processorConfig
+	ctx       context.Context
 }
 
 type config struct {
