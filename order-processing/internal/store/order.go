@@ -22,7 +22,7 @@ func (s *OrderStorage) CreateOrder(ctx context.Context, order *models.Order) err
 func (s *OrderStorage) GetPendingOrders(ctx context.Context) ([]*models.Order, error) {
 	query := `
 		SELECT id, status, created_at FROM orders
-		WHERE status = "pending"
+		WHERE status = 'pending'
 	`
 
 	rows, err := s.db.QueryContext(ctx, query)
