@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime string) (*sql.DB, error) {
+func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime time.Duration) (*sql.DB, error) {
 	db, err := sql.Open("postgres", addr)
 	if err != nil {
 		return nil, err
@@ -16,12 +16,7 @@ func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime string) (*sql.
 
 	db.SetMaxOpenConns(maxOpenConns)
 	db.SetMaxIdleConns(maxIdleConns)
-
-	duration, err := time.ParseDuration(maxIdleTime)
-	if err != nil {
-		return nil, err
-	}
-	db.SetConnMaxIdleTime(duration)
+	db.SetConnMaxIdleTime(maxIdleTime)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
