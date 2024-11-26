@@ -1,15 +1,17 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"order-processing/internal/models"
 )
 
 type Storage struct {
 	Orders interface {
-		GetPendingOrders() ([]models.Order, error)
-		GetOrder(id string) (models.Order, error)
-		UpdateOrder(order models.Order) error
+		CreateOrder(context.Context, *models.Order) error
+		GetPendingOrders(context.Context) ([]models.Order, error)
+		GetOrder(context.Context, string) (models.Order, error)
+		UpdateOrder(context.Context, models.Order) error
 	}
 }
 
