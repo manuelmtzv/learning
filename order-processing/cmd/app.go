@@ -10,7 +10,7 @@ func (app *application) fetchPendingOrders() <-chan *models.Order {
 
 	go func() {
 		defer close(pendingStream)
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 
 		for {
