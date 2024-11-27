@@ -5,6 +5,7 @@ import (
 	"order-processing/internal/db"
 	"order-processing/internal/env"
 	"order-processing/internal/store"
+	"order-processing/internal/workers"
 	"os"
 	"os/signal"
 	"syscall"
@@ -46,11 +47,16 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	watcher := workers.NewWatcher(ctx, store, logger)
+	manager := workers.NewManager(ctx, store, logger)
+
 	app := &application{
 		processor: cfg.processor,
 		store:     store,
 		logger:    logger,
 		ctx:       ctx,
+		watcher:   watcher,
+		manager:   manager,
 	}
 
 	signalStream := make(chan os.Signal, 1)

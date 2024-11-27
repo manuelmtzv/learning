@@ -1,52 +1,63 @@
 package workers
 
 import (
-	"fmt"
-	"order-processing/internal/orders"
+	"context"
+	"order-processing/internal/models"
+	"order-processing/internal/store"
+	"sync"
+
+	"go.uber.org/zap"
 )
 
 type Manager interface {
-	Manage(order <-chan *orders.OrderRequest)
+	ManagePending(map[int]*models.Order, <-chan *models.Order) <-chan *models.Order
 }
 
-type manager struct {
-	pending    []*orders.OrderRequest
-	processing []*orders.OrderRequest
+type ManagerWorker struct {
+	store  *store.Storage
+	ctx    context.Context
+	logger *zap.SugaredLogger
 }
 
-func NewManager(orders int) Manager {
-	return &manager{}
-}
-
-func (m *manager) Manage(order <-chan *orders.OrderRequest) {
-	for {
-		receivedOrder := <-order
-
-		if m.orderExists(receivedOrder) {
-			fmt.Println("Order already exists")
-			continue
-		}
-
-		if receivedOrder.InProcess {
-			m.processing = append(m.processing, receivedOrder)
-		} else {
-			m.pending = append(m.pending, receivedOrder)
-		}
+func NewManager(ctx context.Context, store *store.Storage, logger *zap.SugaredLogger) Manager {
+	return &ManagerWorker{
+		store:  store,
+		ctx:    ctx,
+		logger: logger,
 	}
 }
 
-func (m *manager) orderExists(order *orders.OrderRequest) bool {
-	for _, o := range m.pending {
-		if o.Order.ID == order.Order.ID {
-			return true
-		}
-	}
+func (w *ManagerWorker) ManagePending(pending map[int]*models.Order, watchStream <-chan *models.Order) <-chan *models.Order {
+	pendingStream := make(chan *models.Order)
 
-	for _, o := range m.processing {
-		if o.Order.ID == order.Order.ID {
-			return true
-		}
-	}
+	go func() {
+		m := &sync.Mutex{}
 
-	return false
+		for {
+			select {
+			case <-w.ctx.Done():
+				return
+			case order := <-watchStream:
+				m.Lock()
+				if _, exists := pending[order.ID]; exists {
+					m.Unlock()
+					continue
+				}
+
+				err := w.store.Orders.ChangeOrderStatus(w.ctx, order.ID, "pending")
+				if err != nil {
+					m.Unlock()
+					w.logger.Warnf("Error while setting order %d as pending: %v", order.ID, err)
+					continue
+				}
+
+				pending[order.ID] = order
+				m.Unlock()
+
+				pendingStream <- order
+			}
+		}
+	}()
+
+	return pendingStream
 }
