@@ -19,7 +19,7 @@ func (app *application) fetchPendingOrders() <-chan *models.Order {
 			case <-app.ctx.Done():
 				return
 			case <-ticker.C:
-				pending, err := app.store.Orders.GetPendingOrders(app.ctx)
+				pending, err := app.store.Orders.GetCreatedOrders(app.ctx)
 				if err != nil {
 					app.logger.Errorf("Error fetching pending orders: %v", err)
 					continue
@@ -62,6 +62,12 @@ func (app *application) assignPendingOrders(pending map[int]*models.Order, fetch
 					continue
 				}
 
+				err := app.store.Orders.ChangeOrderStatus(app.ctx, order.ID, "pending")
+				if err != nil {
+					app.logger.Error("Error while setting order as pending:", err)
+					continue
+				}
+
 				pending[order.ID] = order
 				m.Unlock()
 
@@ -71,7 +77,6 @@ func (app *application) assignPendingOrders(pending map[int]*models.Order, fetch
 	}()
 
 	return pendingStream
-
 }
 
 func (app *application) run() {
