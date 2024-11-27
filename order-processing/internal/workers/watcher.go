@@ -30,7 +30,7 @@ func NewWatcher(ctx context.Context, store *store.Storage, logger *zap.SugaredLo
 func (w WatcherWorker) Watch() <-chan *models.Order {
 	pendingStream := make(chan *models.Order, 500)
 
-	fetch := func() {
+	fetchPendingOrders := func() {
 		pending, err := w.store.Orders.GetCreatedOrders(w.ctx)
 		if err != nil {
 			w.logger.Errorf("Error fetching pending orders: %v", err)
@@ -48,7 +48,7 @@ func (w WatcherWorker) Watch() <-chan *models.Order {
 		}
 	}
 
-	fetch()
+	fetchPendingOrders()
 
 	go func() {
 		defer close(pendingStream)
@@ -60,7 +60,7 @@ func (w WatcherWorker) Watch() <-chan *models.Order {
 			case <-w.ctx.Done():
 				return
 			case <-ticker.C:
-				fetch()
+				fetchPendingOrders()
 			}
 		}
 	}()
