@@ -21,9 +21,7 @@ func (app *application) watch() <-chan *models.Order {
 				return
 			}
 
-			if len(pending) == 0 {
-				app.logger.Info("No orders available to enter in process")
-			}
+			app.logger.Infof("Orders watch query finished: %d new orders", len(pending))
 
 			for _, order := range pending {
 				select {
@@ -32,8 +30,6 @@ func (app *application) watch() <-chan *models.Order {
 				case pendingStream <- order:
 				}
 			}
-
-			app.logger.Info("Orders watch process finished")
 		}
 
 		fetch()
