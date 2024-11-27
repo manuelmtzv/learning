@@ -14,30 +14,36 @@ func (app *application) watch() <-chan *models.Order {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 
+		fetch := func() {
+			pending, err := app.store.Orders.GetCreatedOrders(app.ctx)
+			if err != nil {
+				app.logger.Errorf("Error fetching pending orders: %v", err)
+				return
+			}
+
+			if len(pending) == 0 {
+				app.logger.Info("No orders available to enter in process")
+			}
+
+			for _, order := range pending {
+				select {
+				case <-app.ctx.Done():
+					return
+				case pendingStream <- order:
+				}
+			}
+
+			app.logger.Info("Orders watch process finished")
+		}
+
+		fetch()
+
 		for {
 			select {
 			case <-app.ctx.Done():
 				return
 			case <-ticker.C:
-				pending, err := app.store.Orders.GetCreatedOrders(app.ctx)
-				if err != nil {
-					app.logger.Errorf("Error fetching pending orders: %v", err)
-					continue
-				}
-
-				if len(pending) == 0 {
-					app.logger.Info("No orders available to enter in process")
-				}
-
-				for _, order := range pending {
-					select {
-					case <-app.ctx.Done():
-						return
-					case pendingStream <- order:
-					}
-				}
-
-				app.logger.Info("Orders watch process finished")
+				fetch()
 			}
 		}
 	}()
@@ -64,6 +70,7 @@ func (app *application) managePending(pending map[int]*models.Order, watchStream
 
 				err := app.store.Orders.ChangeOrderStatus(app.ctx, order.ID, "pending")
 				if err != nil {
+					m.Unlock()
 					app.logger.Warnf("Error while setting order %d as pending: %v", order.ID, err)
 					continue
 				}
