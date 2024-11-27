@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (app *application) fetchPendingOrders() <-chan *models.Order {
+func (app *application) watch() <-chan *models.Order {
 	pendingStream := make(chan *models.Order, 100)
 
 	go func() {
@@ -26,7 +26,7 @@ func (app *application) fetchPendingOrders() <-chan *models.Order {
 				}
 
 				if len(pending) == 0 {
-					app.logger.Info("No orders available")
+					app.logger.Info("No orders available to enter in process")
 				}
 
 				for _, order := range pending {
@@ -37,7 +37,7 @@ func (app *application) fetchPendingOrders() <-chan *models.Order {
 					}
 				}
 
-				app.logger.Info("Orders refresh finished")
+				app.logger.Info("Orders watch process finished")
 			}
 		}
 	}()
@@ -45,7 +45,7 @@ func (app *application) fetchPendingOrders() <-chan *models.Order {
 	return pendingStream
 }
 
-func (app *application) assignPendingOrders(pending map[int]*models.Order, fetchStream <-chan *models.Order) <-chan *models.Order {
+func (app *application) managePending(pending map[int]*models.Order, watchStream <-chan *models.Order) <-chan *models.Order {
 	pendingStream := make(chan *models.Order)
 
 	go func() {
@@ -55,7 +55,7 @@ func (app *application) assignPendingOrders(pending map[int]*models.Order, fetch
 			select {
 			case <-app.ctx.Done():
 				return
-			case order := <-fetchStream:
+			case order := <-watchStream:
 				m.Lock()
 				if _, exists := pending[order.ID]; exists {
 					m.Unlock()
@@ -82,8 +82,8 @@ func (app *application) assignPendingOrders(pending map[int]*models.Order, fetch
 func (app *application) run() {
 	pendingOrders := make(map[int]*models.Order)
 
-	fetchStream := app.fetchPendingOrders()
-	pendingStream := app.assignPendingOrders(pendingOrders, fetchStream)
+	watchStream := app.watch()
+	pendingStream := app.managePending(pendingOrders, watchStream)
 
 	go func() {
 		for {
