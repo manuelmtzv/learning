@@ -45,7 +45,7 @@ func (app *application) fetchPendingOrders() <-chan *models.Order {
 	return pendingStream
 }
 
-func (app *application) pendingOrdersStream(pending map[int]*models.Order, fetchStream <-chan *models.Order) <-chan *models.Order {
+func (app *application) assignPendingOrders(pending map[int]*models.Order, fetchStream <-chan *models.Order) <-chan *models.Order {
 	pendingStream := make(chan *models.Order)
 
 	go func() {
@@ -78,7 +78,7 @@ func (app *application) run() {
 	pendingOrders := make(map[int]*models.Order)
 
 	fetchStream := app.fetchPendingOrders()
-	pendingStream := app.pendingOrdersStream(pendingOrders, fetchStream)
+	pendingStream := app.assignPendingOrders(pendingOrders, fetchStream)
 
 	go func() {
 		for {
