@@ -8,32 +8,32 @@ import (
 )
 
 func (app *application) watch() <-chan *models.Order {
-	pendingStream := make(chan *models.Order, 100)
+	pendingStream := make(chan *models.Order, 500)
+
+	fetch := func() {
+		pending, err := app.store.Orders.GetCreatedOrders(app.ctx)
+		if err != nil {
+			app.logger.Errorf("Error fetching pending orders: %v", err)
+			return
+		}
+
+		app.logger.Infof("Orders watch query finished: %d new orders", len(pending))
+
+		for _, order := range pending {
+			select {
+			case <-app.ctx.Done():
+				return
+			case pendingStream <- order:
+			}
+		}
+	}
+
+	fetch()
 
 	go func() {
 		defer close(pendingStream)
-		ticker := time.NewTicker(30 * time.Second)
+		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
-
-		fetch := func() {
-			pending, err := app.store.Orders.GetCreatedOrders(app.ctx)
-			if err != nil {
-				app.logger.Errorf("Error fetching pending orders: %v", err)
-				return
-			}
-
-			app.logger.Infof("Orders watch query finished: %d new orders", len(pending))
-
-			for _, order := range pending {
-				select {
-				case <-app.ctx.Done():
-					return
-				case pendingStream <- order:
-				}
-			}
-		}
-
-		fetch()
 
 		for {
 			select {
@@ -85,11 +85,11 @@ func (app *application) managePending(pending map[int]*models.Order, watchStream
 
 func (app *application) orderSimulate() {
 	go func() {
-		ticker := time.NewTicker(time.Duration(rand.Intn(30)+5) * time.Second)
+		ticker := time.NewTicker(time.Duration(rand.Intn(5)+2) * time.Second)
 		defer ticker.Stop()
 
 		simulate := func() {
-			amount := rand.Intn(200) + 1
+			amount := rand.Intn(300) + 1
 
 			app.logger.Infof("Adding %v new simulated orders", amount)
 			for i := 0; i <= amount; i++ {
