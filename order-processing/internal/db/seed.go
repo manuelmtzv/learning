@@ -13,7 +13,7 @@ func Seed(store *store.Storage, db *sql.DB) {
 
 	for i := 0; i < 1000; i++ {
 		order := &models.Order{
-			Status: "pending",
+			Status: "created",
 		}
 		err := store.Orders.CreateOrder(ctx, order)
 		if err != nil {

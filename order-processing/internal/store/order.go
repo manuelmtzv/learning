@@ -19,10 +19,10 @@ func (s *OrderStorage) CreateOrder(ctx context.Context, order *models.Order) err
 	return s.db.QueryRowContext(ctx, query, order.Status).Scan(&order.ID, &order.CreatedAt)
 }
 
-func (s *OrderStorage) GetPendingOrders(ctx context.Context) ([]*models.Order, error) {
+func (s *OrderStorage) GetCreatedOrders(ctx context.Context) ([]*models.Order, error) {
 	query := `
 		SELECT id, status, created_at FROM orders
-		WHERE status = 'pending'
+		WHERE status = 'created'
 	`
 
 	rows, err := s.db.QueryContext(ctx, query)
@@ -53,8 +53,8 @@ func (s *OrderStorage) ChangeOrderStatus(ctx context.Context, id int, newStatus 
 		WHERE id = $2
 	`
 
-	args := []interface{}{id, newStatus}
-	_, err := s.db.ExecContext(ctx, query, args)
+	args := []interface{}{newStatus, id}
+	_, err := s.db.ExecContext(ctx, query, args...)
 
 	return err
 }
