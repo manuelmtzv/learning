@@ -47,16 +47,16 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	orderSimulator := workers.NewOrderSimulator(ctx, store, logger)
 	watcher := workers.NewWatcher(ctx, store, logger)
 	manager := workers.NewManager(ctx, store, logger)
 
 	app := &application{
-		processor: cfg.processor,
-		store:     store,
-		logger:    logger,
-		ctx:       ctx,
-		watcher:   watcher,
-		manager:   manager,
+		logger:         logger,
+		ctx:            ctx,
+		watcher:        watcher,
+		manager:        manager,
+		orderSimulator: orderSimulator,
 	}
 
 	signalStream := make(chan os.Signal, 1)

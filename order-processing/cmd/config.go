@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"order-processing/internal/store"
 	"order-processing/internal/workers"
 	"time"
 
@@ -10,12 +9,11 @@ import (
 )
 
 type application struct {
-	store     *store.Storage
-	logger    *zap.SugaredLogger
-	processor processorConfig
-	ctx       context.Context
-	watcher   workers.Watcher
-	manager   workers.Manager
+	logger         *zap.SugaredLogger
+	ctx            context.Context
+	watcher        workers.Watcher
+	manager        workers.Manager
+	orderSimulator workers.OrderSimulator
 }
 
 type config struct {
