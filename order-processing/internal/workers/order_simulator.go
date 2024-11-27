@@ -11,24 +11,22 @@ import (
 )
 
 type OrderSimulator interface {
-	Generate()
+	Generate(ctx context.Context)
 }
 
 type OrderSimulatorWorker struct {
 	store  *store.Storage
-	ctx    context.Context
 	logger *zap.SugaredLogger
 }
 
-func NewOrderSimulator(ctx context.Context, store *store.Storage, logger *zap.SugaredLogger) OrderSimulator {
+func NewOrderSimulator(store *store.Storage, logger *zap.SugaredLogger) OrderSimulator {
 	return &OrderSimulatorWorker{
 		store:  store,
-		ctx:    ctx,
 		logger: logger,
 	}
 }
 
-func (w OrderSimulatorWorker) Generate() {
+func (w OrderSimulatorWorker) Generate(ctx context.Context) {
 	go func() {
 		ticker := time.NewTicker(time.Duration(rand.Intn(5)+2) * time.Second)
 		defer ticker.Stop()
@@ -41,7 +39,7 @@ func (w OrderSimulatorWorker) Generate() {
 				order := &models.Order{
 					Status: "created",
 				}
-				w.store.Orders.CreateOrder(w.ctx, order)
+				w.store.Orders.CreateOrder(ctx, order)
 			}
 		}
 
@@ -49,7 +47,7 @@ func (w OrderSimulatorWorker) Generate() {
 
 		for {
 			select {
-			case <-w.ctx.Done():
+			case <-ctx.Done():
 				return
 			case <-ticker.C:
 				simulate()

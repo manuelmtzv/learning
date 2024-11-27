@@ -10,24 +10,22 @@ import (
 )
 
 type Manager interface {
-	ManagePending(map[int]*models.Order, <-chan *models.Order) <-chan *models.Order
+	ManagePending(context.Context, map[int]*models.Order, <-chan *models.Order) <-chan *models.Order
 }
 
 type ManagerWorker struct {
 	store  *store.Storage
-	ctx    context.Context
 	logger *zap.SugaredLogger
 }
 
-func NewManager(ctx context.Context, store *store.Storage, logger *zap.SugaredLogger) Manager {
+func NewManager(store *store.Storage, logger *zap.SugaredLogger) Manager {
 	return &ManagerWorker{
 		store:  store,
-		ctx:    ctx,
 		logger: logger,
 	}
 }
 
-func (w *ManagerWorker) ManagePending(pending map[int]*models.Order, watchStream <-chan *models.Order) <-chan *models.Order {
+func (w *ManagerWorker) ManagePending(ctx context.Context, pending map[int]*models.Order, watchStream <-chan *models.Order) <-chan *models.Order {
 	pendingStream := make(chan *models.Order)
 
 	go func() {
@@ -35,7 +33,7 @@ func (w *ManagerWorker) ManagePending(pending map[int]*models.Order, watchStream
 
 		for {
 			select {
-			case <-w.ctx.Done():
+			case <-ctx.Done():
 				return
 			case order := <-watchStream:
 				m.Lock()
@@ -44,7 +42,7 @@ func (w *ManagerWorker) ManagePending(pending map[int]*models.Order, watchStream
 					continue
 				}
 
-				err := w.store.Orders.ChangeOrderStatus(w.ctx, order.ID, "pending")
+				err := w.store.Orders.ChangeOrderStatus(ctx, order.ID, "pending")
 				if err != nil {
 					m.Unlock()
 					w.logger.Warnf("Error while setting order %d as pending: %v", order.ID, err)

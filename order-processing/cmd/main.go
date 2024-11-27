@@ -47,9 +47,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	orderSimulator := workers.NewOrderSimulator(ctx, store, logger)
-	watcher := workers.NewWatcher(ctx, store, logger)
-	manager := workers.NewManager(ctx, store, logger)
+	orderSimulator := workers.NewOrderSimulator(store, logger)
+	watcher := workers.NewWatcher(store, logger)
+	manager := workers.NewManager(store, logger)
 
 	app := &application{
 		logger:         logger,

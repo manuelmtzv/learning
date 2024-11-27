@@ -5,11 +5,11 @@ import (
 )
 
 func (app *application) run() {
-	app.orderSimulator.Generate()
+	app.orderSimulator.Generate(app.ctx)
 	pendingOrders := make(map[int]*models.Order)
 
-	watchStream := app.watcher.Watch()
-	pendingStream := app.manager.ManagePending(pendingOrders, watchStream)
+	watchStream := app.watcher.Watch(app.ctx)
+	pendingStream := app.manager.ManagePending(app.ctx, pendingOrders, watchStream)
 
 	go func() {
 		for {
