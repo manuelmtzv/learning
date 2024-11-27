@@ -6,38 +6,33 @@ import (
 	"time"
 )
 
-func (app *application) watch() (<-chan *models.Order, error) {
+func (app *application) watch() <-chan *models.Order {
 	pendingStream := make(chan *models.Order, 100)
-
-	fetch := func() error {
-		pending, err := app.store.Orders.GetCreatedOrders(app.ctx)
-		if err != nil {
-			app.logger.Errorf("Error fetching pending orders: %v", err)
-			return err
-		}
-
-		app.logger.Infof("Orders watch query finished: %d new orders", len(pending))
-
-		for _, order := range pending {
-			select {
-			case <-app.ctx.Done():
-				return nil
-			case pendingStream <- order:
-			}
-		}
-
-		return nil
-	}
-
-	err := fetch()
-	if err != nil {
-		return pendingStream, err
-	}
 
 	go func() {
 		defer close(pendingStream)
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
+
+		fetch := func() {
+			pending, err := app.store.Orders.GetCreatedOrders(app.ctx)
+			if err != nil {
+				app.logger.Errorf("Error fetching pending orders: %v", err)
+				return
+			}
+
+			app.logger.Infof("Orders watch query finished: %d new orders", len(pending))
+
+			for _, order := range pending {
+				select {
+				case <-app.ctx.Done():
+					return
+				case pendingStream <- order:
+				}
+			}
+		}
+
+		fetch()
 
 		for {
 			select {
@@ -49,7 +44,7 @@ func (app *application) watch() (<-chan *models.Order, error) {
 		}
 	}()
 
-	return pendingStream, nil
+	return pendingStream
 }
 
 func (app *application) managePending(pending map[int]*models.Order, watchStream <-chan *models.Order) <-chan *models.Order {
@@ -64,18 +59,21 @@ func (app *application) managePending(pending map[int]*models.Order, watchStream
 				return
 			case order := <-watchStream:
 				m.Lock()
-				defer m.Unlock()
 				if _, exists := pending[order.ID]; exists {
+					m.Unlock()
 					continue
 				}
 
 				err := app.store.Orders.ChangeOrderStatus(app.ctx, order.ID, "pending")
 				if err != nil {
+					m.Unlock()
 					app.logger.Warnf("Error while setting order %d as pending: %v", order.ID, err)
 					continue
 				}
 
 				pending[order.ID] = order
+				m.Unlock()
+
 				pendingStream <- order
 			}
 		}
@@ -87,11 +85,7 @@ func (app *application) managePending(pending map[int]*models.Order, watchStream
 func (app *application) run() {
 	pendingOrders := make(map[int]*models.Order)
 
-	watchStream, err := app.watch()
-	if err != nil {
-		app.logger.Panic("Error on first query of new orders:", err)
-	}
-
+	watchStream := app.watch()
 	pendingStream := app.managePending(pendingOrders, watchStream)
 
 	go func() {
