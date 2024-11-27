@@ -64,7 +64,7 @@ func (app *application) managePending(pending map[int]*models.Order, watchStream
 
 				err := app.store.Orders.ChangeOrderStatus(app.ctx, order.ID, "pending")
 				if err != nil {
-					app.logger.Error("Error while setting order as pending:", err)
+					app.logger.Warnf("Error while setting order %d as pending: %v", order.ID, err)
 					continue
 				}
 
