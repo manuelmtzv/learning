@@ -46,10 +46,19 @@ func (s *OrderStorage) GetPendingOrders(ctx context.Context) ([]*models.Order, e
 	return orders, nil
 }
 
-func (s *OrderStorage) GetOrder(ctx context.Context, id string) (*models.Order, error) {
-	return nil, nil
+func (s *OrderStorage) ChangeOrderStatus(ctx context.Context, id int, newStatus string) error {
+	query := `
+		UPDATE orders
+		SET status = $1
+		WHERE id = $2
+	`
+
+	args := []interface{}{id, newStatus}
+	_, err := s.db.ExecContext(ctx, query, args)
+
+	return err
 }
 
-func (s *OrderStorage) UpdateOrder(ctx context.Context, order *models.Order) error {
-	return nil
+func (s *OrderStorage) GetOrder(ctx context.Context, id string) (*models.Order, error) {
+	return nil, nil
 }

@@ -11,7 +11,7 @@ type Storage struct {
 		CreateOrder(context.Context, *models.Order) error
 		GetPendingOrders(context.Context) ([]*models.Order, error)
 		GetOrder(context.Context, string) (*models.Order, error)
-		UpdateOrder(context.Context, *models.Order) error
+		ChangeOrderStatus(context.Context, int, string) error
 	}
 }
 
