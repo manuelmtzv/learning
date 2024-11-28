@@ -50,6 +50,7 @@ func main() {
 	orderSimulator := workers.NewOrderSimulator(store, logger)
 	watcher := workers.NewWatcher(store, logger)
 	manager := workers.NewManager(store, logger)
+	requester := workers.NewRequester(store, logger)
 
 	app := &application{
 		logger:         logger,
@@ -57,6 +58,7 @@ func main() {
 		watcher:        watcher,
 		manager:        manager,
 		orderSimulator: orderSimulator,
+		requester:      requester,
 	}
 
 	signalStream := make(chan os.Signal, 1)

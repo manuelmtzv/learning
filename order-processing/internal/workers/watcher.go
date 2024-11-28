@@ -25,7 +25,7 @@ func NewWatcher(store *store.Storage, logger *zap.SugaredLogger) Watcher {
 	}
 }
 
-func (w WatcherWorker) Watch(ctx context.Context) <-chan *models.Order {
+func (w *WatcherWorker) Watch(ctx context.Context) <-chan *models.Order {
 	pendingStream := make(chan *models.Order, 500)
 
 	fetchPendingOrders := func() {

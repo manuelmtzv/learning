@@ -14,6 +14,7 @@ type application struct {
 	watcher        workers.Watcher
 	manager        workers.Manager
 	orderSimulator workers.OrderSimulator
+	requester      workers.Requester
 }
 
 type config struct {
