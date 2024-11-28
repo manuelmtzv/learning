@@ -27,9 +27,6 @@ func NewOrderSimulator(store *store.Storage, logger *zap.SugaredLogger) OrderSim
 }
 
 func (w OrderSimulatorWorker) Generate(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(rand.Intn(5)+2) * time.Second)
-	defer ticker.Stop()
-
 	simulate := func() {
 		amount := rand.Intn(300) + 1
 
@@ -42,14 +39,17 @@ func (w OrderSimulatorWorker) Generate(ctx context.Context) {
 		}
 	}
 
-	simulate()
+	go func() {
+		ticker := time.NewTicker(time.Duration(rand.Intn(5)+2) * time.Second)
+		defer ticker.Stop()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			simulate()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				simulate()
+			}
 		}
-	}
+	}()
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func (app *application) run() {
-	go app.orderSimulator.Generate(app.ctx)
+	app.orderSimulator.Generate(app.ctx)
 	pendingOrders := make(map[int]*models.Order)
 
 	watchStream := app.watcher.Watch(app.ctx)
