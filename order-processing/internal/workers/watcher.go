@@ -46,7 +46,7 @@ func (w WatcherWorker) Watch(ctx context.Context) <-chan *models.Order {
 		}
 	}
 
-	fetchPendingOrders()
+	go fetchPendingOrders()
 
 	go func() {
 		defer close(pendingStream)
