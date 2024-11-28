@@ -26,10 +26,10 @@ func NewWatcher(store *store.Storage, logger *zap.SugaredLogger) Watcher {
 }
 
 func (w *WatcherWorker) Watch(ctx context.Context) <-chan *models.Order {
-	pendingStream := make(chan *models.Order, 500)
+	pendingStream := make(chan *models.Order, 2000)
 
 	fetchPendingOrders := func() {
-		pending, err := w.store.Orders.GetCreatedOrders(ctx)
+		pending, err := w.store.Orders.GetOrdersByStatus(ctx, "created")
 		if err != nil {
 			w.logger.Errorf("Error fetching pending orders: %v", err)
 			return

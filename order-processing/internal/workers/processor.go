@@ -2,10 +2,8 @@ package workers
 
 import (
 	"context"
-	"math/rand"
 	"order-processing/internal/models"
 	"order-processing/internal/store"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -55,7 +53,6 @@ func (w *ProcessorWorker) Work(ctx context.Context) {
 }
 
 func (w *ProcessorWorker) process(ctx context.Context, order *models.Order) (*models.Order, error) {
-	time.Sleep(time.Duration(rand.Intn(2)) * time.Second)
 	w.store.Orders.ChangeOrderStatus(ctx, order.ID, "processed")
 	return order, nil
 }

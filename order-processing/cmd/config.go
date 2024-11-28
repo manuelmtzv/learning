@@ -32,5 +32,6 @@ type dbConfig struct {
 }
 
 type processorConfig struct {
-	workers int
+	workers        int
+	simulateOrders bool
 }

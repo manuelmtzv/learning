@@ -24,7 +24,8 @@ func main() {
 
 	cfg := &config{
 		processor: processorConfig{
-			workers: env.GetInt("WORKERS", 4),
+			workers:        env.GetInt("WORKERS", 4),
+			simulateOrders: env.GetBool("SIMULATE_ORDERS", false),
 		},
 		db: dbConfig{
 			addr:         env.GetString("DB_ADDR", ""),
@@ -66,12 +67,14 @@ func main() {
 	signalStream := make(chan os.Signal, 1)
 	signal.Notify(signalStream, os.Interrupt, syscall.SIGTERM)
 
-	go app.run()
+	go app.run(cfg.processor.simulateOrders)
 
 	<-signalStream
 	logger.Infof("Shutting down gracefully... CTRL + C to force.")
 
 	cancel()
+
+	orderCleanup(store, logger)
 
 	time.Sleep(1 * time.Second) // Simulate cleanup
 	logger.Infof("Application stopped.")

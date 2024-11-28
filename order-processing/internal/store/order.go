@@ -19,13 +19,13 @@ func (s *OrderStorage) CreateOrder(ctx context.Context, order *models.Order) err
 	return s.db.QueryRowContext(ctx, query, order.Status).Scan(&order.ID, &order.CreatedAt)
 }
 
-func (s *OrderStorage) GetCreatedOrders(ctx context.Context) ([]*models.Order, error) {
+func (s *OrderStorage) GetOrdersByStatus(ctx context.Context, status string) ([]*models.Order, error) {
 	query := `
 		SELECT id, status, created_at FROM orders
-		WHERE status = 'created'
+		WHERE status = $1
 	`
 
-	rows, err := s.db.QueryContext(ctx, query)
+	rows, err := s.db.QueryContext(ctx, query, status)
 	if err != nil {
 		return nil, err
 	}

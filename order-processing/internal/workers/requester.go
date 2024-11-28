@@ -36,7 +36,7 @@ func NewRequester(store *store.Storage, logger *zap.SugaredLogger) Requester {
 
 func (w *RequesterWorker) Request(ctx context.Context, pendingStream <-chan *models.Order, workStream chan<- *Request, processedStream chan<- *models.Order) {
 	go func() {
-		c := make(chan *Result, 100)
+		c := make(chan *Result)
 
 		for {
 			select {
@@ -47,16 +47,18 @@ func (w *RequesterWorker) Request(ctx context.Context, pendingStream <-chan *mod
 
 				workStream <- &Request{order: order, c: c}
 
-				select {
-				case <-ctx.Done():
-					return
-				case result := <-c:
-					if !result.success {
-						w.logger.Errorf("Order %d could not be processed:", order.ID)
-						continue
+				go func() {
+					select {
+					case <-ctx.Done():
+						return
+					case result := <-c:
+						if !result.success {
+							w.logger.Errorf("Order %d could not be processed:", order.ID)
+							return
+						}
+						processedStream <- result.order
 					}
-					processedStream <- result.order
-				}
+				}()
 			}
 		}
 	}()

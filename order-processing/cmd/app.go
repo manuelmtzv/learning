@@ -5,15 +5,17 @@ import (
 	"order-processing/internal/workers"
 )
 
-func (app *application) run() {
-	app.orderSimulator.Generate(app.ctx)
+func (app *application) run(simulate bool) {
+	if simulate {
+		app.orderSimulator.Generate(app.ctx)
+	}
 	pendingOrders := make(map[int]*models.Order)
 
 	watchStream := app.watcher.Watch(app.ctx)
 	pendingStream := app.manager.ManagePending(app.ctx, pendingOrders, watchStream)
 
-	workStream := make(chan *workers.Request, 400)
-	processedStream := make(chan *models.Order, 800)
+	workStream := make(chan *workers.Request, 2000)
+	processedStream := make(chan *models.Order, 1000)
 
 	app.requester.Request(app.ctx, pendingStream, workStream, processedStream)
 
