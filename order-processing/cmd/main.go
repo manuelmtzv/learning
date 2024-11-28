@@ -51,6 +51,7 @@ func main() {
 	watcher := workers.NewWatcher(store, logger)
 	manager := workers.NewManager(store, logger)
 	requester := workers.NewRequester(store, logger)
+	balancer := workers.NewBalancer(logger, store, cfg.processor.workers)
 
 	app := &application{
 		logger:         logger,
@@ -59,6 +60,7 @@ func main() {
 		manager:        manager,
 		orderSimulator: orderSimulator,
 		requester:      requester,
+		balancer:       balancer,
 	}
 
 	signalStream := make(chan os.Signal, 1)

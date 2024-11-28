@@ -8,9 +8,14 @@ import (
 	"go.uber.org/zap"
 )
 
+type Result struct {
+	order   *models.Order
+	success bool
+}
+
 type Request struct {
 	order *models.Order
-	c     chan *models.Order
+	c     chan *Result
 }
 
 type Requester interface {
@@ -31,13 +36,11 @@ func NewRequester(store *store.Storage, logger *zap.SugaredLogger) Requester {
 
 func (w *RequesterWorker) Request(ctx context.Context, pendingStream <-chan *models.Order, workStream chan<- *Request, processedStream chan<- *models.Order) {
 	go func() {
-		c := make(chan *models.Order, 100)
-		defer close(c)
+		c := make(chan *Result, 100)
 
 		for {
 			select {
 			case <-ctx.Done():
-				w.logger.Info("Shutting down requester worker gracefully.")
 				return
 			case order := <-pendingStream:
 				w.logger.Info("Pending order added:", order)
@@ -45,11 +48,14 @@ func (w *RequesterWorker) Request(ctx context.Context, pendingStream <-chan *mod
 				workStream <- &Request{order: order, c: c}
 
 				select {
-				case result := <-c:
-					processedStream <- result
 				case <-ctx.Done():
-					w.logger.Info("Context done, exiting worker.")
 					return
+				case result := <-c:
+					if !result.success {
+						w.logger.Errorf("Order %d could not be processed:", order.ID)
+						continue
+					}
+					processedStream <- result.order
 				}
 			}
 		}

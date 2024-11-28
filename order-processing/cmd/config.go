@@ -9,12 +9,14 @@ import (
 )
 
 type application struct {
-	logger         *zap.SugaredLogger
-	ctx            context.Context
+	logger *zap.SugaredLogger
+	ctx    context.Context
+
 	watcher        workers.Watcher
 	manager        workers.Manager
 	orderSimulator workers.OrderSimulator
 	requester      workers.Requester
+	balancer       workers.Balancer
 }
 
 type config struct {

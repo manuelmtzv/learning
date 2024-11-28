@@ -26,9 +26,10 @@ func NewManager(store *store.Storage, logger *zap.SugaredLogger) Manager {
 }
 
 func (w *ManagerWorker) ManagePending(ctx context.Context, pending map[int]*models.Order, watchStream <-chan *models.Order) <-chan *models.Order {
-	pendingStream := make(chan *models.Order)
+	pendingStream := make(chan *models.Order, 400)
 
 	go func() {
+		defer close(pendingStream)
 		m := &sync.Mutex{}
 
 		for {
