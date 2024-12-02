@@ -11,15 +11,19 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 func main() {
-	logger := zap.Must(zap.NewProduction()).Sugar()
+	logger := log.NewWithOptions(os.Stderr, log.Options{
+		ReportCaller:    true,
+		ReportTimestamp: true,
+		TimeFormat:      time.StampMicro,
+	})
 
 	err := env.Load()
 	if err != nil {
-		logger.Panic(err)
+		logger.Fatal(err)
 	}
 
 	cfg := &config{
@@ -37,11 +41,11 @@ func main() {
 
 	db, err := db.New(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)
 	if err != nil {
-		logger.Panic(err)
+		logger.Fatal(err)
 	}
 
 	defer db.Close()
-	logger.Infow("DB connected")
+	logger.Info("DB connected")
 
 	store := store.NewStorage(db)
 

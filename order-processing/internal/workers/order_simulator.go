@@ -7,7 +7,7 @@ import (
 	"order-processing/internal/store"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 type OrderSimulator interface {
@@ -16,10 +16,10 @@ type OrderSimulator interface {
 
 type OrderSimulatorWorker struct {
 	store  *store.Storage
-	logger *zap.SugaredLogger
+	logger *log.Logger
 }
 
-func NewOrderSimulator(store *store.Storage, logger *zap.SugaredLogger) OrderSimulator {
+func NewOrderSimulator(store *store.Storage, logger *log.Logger) OrderSimulator {
 	return &OrderSimulatorWorker{
 		store:  store,
 		logger: logger,

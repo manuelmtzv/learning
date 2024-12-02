@@ -6,7 +6,7 @@ import (
 	"order-processing/internal/store"
 	"sync"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 type Balancer interface {
@@ -14,14 +14,14 @@ type Balancer interface {
 }
 
 type BalancerWorker struct {
-	logger  *zap.SugaredLogger
+	logger  *log.Logger
 	store   *store.Storage
 	pool    Pool
 	done    chan *ProcessorWorker
 	poolMux sync.Mutex
 }
 
-func NewBalancer(logger *zap.SugaredLogger, store *store.Storage, workers int) Balancer {
+func NewBalancer(logger *log.Logger, store *store.Storage, workers int) Balancer {
 	b := &BalancerWorker{
 		logger: logger,
 		store:  store,

@@ -5,10 +5,10 @@ import (
 	"order-processing/internal/store"
 	"sync"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
-func orderCleanup(store *store.Storage, logger *zap.SugaredLogger) {
+func orderCleanup(store *store.Storage, logger *log.Logger) {
 	ctx := context.Background()
 
 	logger.Info("Starting order cleanup")

@@ -6,7 +6,7 @@ import (
 	"order-processing/internal/store"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 type Watcher interface {
@@ -15,10 +15,10 @@ type Watcher interface {
 
 type WatcherWorker struct {
 	store  *store.Storage
-	logger *zap.SugaredLogger
+	logger *log.Logger
 }
 
-func NewWatcher(store *store.Storage, logger *zap.SugaredLogger) Watcher {
+func NewWatcher(store *store.Storage, logger *log.Logger) Watcher {
 	return &WatcherWorker{
 		store:  store,
 		logger: logger,

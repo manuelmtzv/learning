@@ -5,7 +5,7 @@ import (
 	"order-processing/internal/models"
 	"order-processing/internal/store"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 type Processor interface {
@@ -13,14 +13,14 @@ type Processor interface {
 }
 
 type ProcessorWorker struct {
-	logger   *zap.SugaredLogger
+	logger   *log.Logger
 	store    *store.Storage
 	requests chan *Request
 	pending  int
 	index    int
 }
 
-func NewProcessor(logger *zap.SugaredLogger, store *store.Storage) Processor {
+func NewProcessor(logger *log.Logger, store *store.Storage) Processor {
 	return &ProcessorWorker{
 		logger:   logger,
 		store:    store,

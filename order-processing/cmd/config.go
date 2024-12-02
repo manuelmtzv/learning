@@ -5,11 +5,11 @@ import (
 	"order-processing/internal/workers"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 type application struct {
-	logger *zap.SugaredLogger
+	logger *log.Logger
 	ctx    context.Context
 
 	watcher        workers.Watcher

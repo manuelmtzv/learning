@@ -5,7 +5,7 @@ import (
 	"order-processing/internal/models"
 	"order-processing/internal/store"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 type Result struct {
@@ -24,10 +24,10 @@ type Requester interface {
 
 type RequesterWorker struct {
 	store  *store.Storage
-	logger *zap.SugaredLogger
+	logger *log.Logger
 }
 
-func NewRequester(store *store.Storage, logger *zap.SugaredLogger) Requester {
+func NewRequester(store *store.Storage, logger *log.Logger) Requester {
 	return &RequesterWorker{
 		store:  store,
 		logger: logger,
@@ -43,7 +43,7 @@ func (w *RequesterWorker) Request(ctx context.Context, pendingStream <-chan *mod
 			case <-ctx.Done():
 				return
 			case order := <-pendingStream:
-				w.logger.Info("Pending order added:", order)
+				w.logger.Info("Pending order added:", "order", order)
 
 				workStream <- &Request{order: order, c: c}
 

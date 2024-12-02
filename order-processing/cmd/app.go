@@ -27,7 +27,7 @@ func (app *application) run(simulate bool) {
 			case <-app.ctx.Done():
 				return
 			case order := <-processedStream:
-				app.logger.Info("Order processed!:", order)
+				app.logger.Info("Order processed!:", "order", order)
 			}
 		}
 	}()

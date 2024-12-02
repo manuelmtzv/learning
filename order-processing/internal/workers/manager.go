@@ -6,7 +6,7 @@ import (
 	"order-processing/internal/store"
 	"sync"
 
-	"go.uber.org/zap"
+	"github.com/charmbracelet/log"
 )
 
 type Manager interface {
@@ -15,10 +15,10 @@ type Manager interface {
 
 type ManagerWorker struct {
 	store  *store.Storage
-	logger *zap.SugaredLogger
+	logger *log.Logger
 }
 
-func NewManager(store *store.Storage, logger *zap.SugaredLogger) Manager {
+func NewManager(store *store.Storage, logger *log.Logger) Manager {
 	return &ManagerWorker{
 		store:  store,
 		logger: logger,
