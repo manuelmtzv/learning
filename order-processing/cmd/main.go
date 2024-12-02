@@ -4,22 +4,17 @@ import (
 	"context"
 	"order-processing/internal/db"
 	"order-processing/internal/env"
+	"order-processing/internal/logger"
 	"order-processing/internal/store"
 	"order-processing/internal/workers"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/charmbracelet/log"
 )
 
 func main() {
-	logger := log.NewWithOptions(os.Stderr, log.Options{
-		ReportCaller:    true,
-		ReportTimestamp: true,
-		TimeFormat:      time.StampMicro,
-	})
+	logger := logger.New()
 
 	err := env.Load()
 	if err != nil {
