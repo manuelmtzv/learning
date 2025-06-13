@@ -2,6 +2,38 @@ package main
 
 import "fmt"
 
+func repeat(done <-chan interface{}, values ...interface{}) <-chan interface{} {
+	valueStream := make(chan interface{})
+	go func() {
+		defer close(valueStream)
+		for {
+			for _, v := range values {
+				select {
+				case <-done:
+					return
+				case valueStream <- v:
+				}
+			}
+		}
+	}()
+	return valueStream
+}
+
+func take(done <-chan interface{}, valueStream <-chan interface{}, limit int) <-chan interface{} {
+	takeStream := make(chan interface{})
+	go func() {
+		defer close(takeStream)
+		for range limit {
+			select {
+			case <-done:
+				return
+			case takeStream <- <-valueStream:
+			}
+		}
+	}()
+	return takeStream
+}
+
 func orDone(done, c <-chan interface{}) <-chan interface{} {
 	valueStream := make(chan interface{})
 	go func() {
@@ -32,7 +64,7 @@ func tee(done <-chan interface{}, in <-chan interface{}) (_, _ <-chan interface{
 		defer close(out2)
 		for val := range orDone(done, in) {
 			var out1, out2 = out1, out2
-			for i := 0; i < 2; i++ {
+			for range 2 {
 				select {
 				case <-done:
 				case out1 <- val:
@@ -48,17 +80,9 @@ func tee(done <-chan interface{}, in <-chan interface{}) (_, _ <-chan interface{
 
 func main() {
 	done := make(chan interface{})
-	in := make(chan interface{})
 	defer close(done)
 
-	go func() {
-		defer close(in)
-		for i := 0; i < 5; i++ {
-			in <- i
-		}
-	}()
-
-	out1, out2 := tee(done, in)
+	out1, out2 := tee(done, take(done, repeat(done, 1, 2, 3, 4), 5))
 
 	for val := range out1 {
 		fmt.Printf("out1: %v, out2: %v\n", val, <-out2)
